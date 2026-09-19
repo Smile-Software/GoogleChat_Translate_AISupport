@@ -47,6 +47,9 @@ test("does not send quoted message content for translation", async () => {
     expect(request).toBeTruthy();
     expect(request.body).toContain("これは新しいメッセージだけです。");
     expect(request.body).not.toContain("引用された古いメッセージです。");
+    expect(request.body).not.toContain("đã trích dẫn");
+    expect(request.body).not.toContain("Kết thúc trích dẫn");
+    expect(request.body).not.toContain("hãy nhấn L để liên kết trở lại với tin nhắn ban đầu");
   } finally {
     await app.close();
   }
