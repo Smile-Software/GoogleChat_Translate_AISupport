@@ -8,7 +8,7 @@
 ## Results
 
 - Unit: 32 passed, 0 failed
-- E2E: 16 passed, 0 failed
+- E2E: 17 passed, 0 failed
 - Full command: `npm test`
 - Screenshot command: `node scripts/capture-readme-screenshots.mjs`
 
@@ -37,6 +37,7 @@ The full suite covers the original UX flows plus the resilience suite. The final
 - Luna-first model ordering
 - Credential masking before provider request
 - Safe rendering of provider text containing HTML-like content
+- Quoted message content is excluded from translation provider requests
 - Explicit retry after 401/429/500 and timeout states
 
 ## Automated Test Files

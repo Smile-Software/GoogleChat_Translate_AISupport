@@ -169,6 +169,7 @@ function textOf(node) {
   const host = messageHost(node);
   const clone = host.cloneNode(true);
   if (host !== node) removeNodeBranch(clone, host, node);
+  clone.querySelectorAll('[data-is-same-group-quote="true"], .Nld3je').forEach((item) => item.remove());
   clone.querySelectorAll("button,[data-tc-ui],[data-menu],[data-menu-popup],[data-message-actions],time,[role='button']").forEach((item) => item.remove());
   return cleanChatMessageText(clone.innerText || clone.textContent || "", {
     author: node.dataset.author || node.querySelector("[data-author]")?.textContent.trim() || "",

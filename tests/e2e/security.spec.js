@@ -23,7 +23,7 @@ test("masks credential-like text before provider request", async () => {
 test("translates only the message body and mounts controls outside the host action area", async () => {
   const app = await launchConfiguredApp();
   try {
-    const message = app.page.locator(".live-message-shell");
+    const message = app.page.locator(".live-message-shell:not(.quote-message-shell)");
     await message.locator("[data-tc-action]").click();
     await expect(message.locator("[data-tc-translation]")).toBeVisible();
     const request = app.provider.requests.find((item) => item.url === "/v1/chat/completions");
@@ -32,6 +32,21 @@ test("translates only the message body and mounts controls outside the host acti
     expect(request.body).not.toContain("domain_disabled");
     expect(await message.locator("[data-message-actions] [data-tc-ui]").count()).toBe(0);
     expect(await message.locator("[data-tc-surface] [data-tc-action]").count()).toBe(1);
+  } finally {
+    await app.close();
+  }
+});
+
+test("does not send quoted message content for translation", async () => {
+  const app = await launchConfiguredApp();
+  try {
+    const message = app.page.locator(".quote-message-shell");
+    await message.locator("[data-tc-action]").click();
+    await expect(message.locator("[data-tc-translation]")).toBeVisible();
+    const request = app.provider.requests.find((item) => item.url === "/v1/chat/completions" && item.body.includes("新しいメッセージ"));
+    expect(request).toBeTruthy();
+    expect(request.body).toContain("これは新しいメッセージだけです。");
+    expect(request.body).not.toContain("引用された古いメッセージです。");
   } finally {
     await app.close();
   }

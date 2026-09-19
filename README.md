@@ -4,7 +4,7 @@ Tiện ích Chrome MV3 giúp dịch message trong Google Chat và tạo bản t�
 
 ## Chức năng
 
-- Dịch nội dung chính của message sang ngôn ngữ được chọn, mặc định là tiếng Việt.
+- Dịch nội dung chính của message sang ngôn ngữ được chọn, mặc định là tiếng Việt; tự động bỏ qua phần message được trích dẫn.
 - Tự động dịch message mới khi bật `Tự dịch message mới`.
 - Hoạt động ở room chính và thread con đang mở.
 - Thêm nút `Tóm tắt thread bằng AI` vào menu ba chấm của message.
@@ -48,6 +48,7 @@ Danh sách room được bật được lưu local cùng Settings. Tắt công t
 
 - Khi bật dịch tự động, nút `Dịch` và vùng bản dịch xuất hiện bên dưới nội dung message.
 - Message gốc vẫn được giữ nguyên. Bản dịch dài sẽ tự xuống dòng trong khung message.
+- Phần nội dung được trích dẫn vẫn hiển thị nguyên bản và không được gửi lên provider; chỉ phần message mới được dịch.
 - Mở thread con: các reply trong panel thread chi tiết sẽ được tự động quan sát và dịch.
 - Bấm `Dịch lại` để thử lại bản dịch bị lỗi hoặc bản dịch của nội dung đã thay đổi.
 - Lỗi provider chỉ hiển thị thông báo an toàn trong UI extension; nội dung gốc trong Google Chat không bị thay thế.
