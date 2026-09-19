@@ -1,123 +1,123 @@
 # TranslateChat AI
 
-> Chrome MV3 extension that translates Google Chat messages inline and creates private AI summaries for threads.
+Tiện ích Chrome MV3 giúp dịch message trong Google Chat và tạo bản tóm tắt AI riêng tư cho thread.
 
-## What It Does
+## Chức năng
 
-- Translates the main message body into a selected language, with Vietnamese as the default.
-- Automatically translates newly rendered messages when `Tự dịch message mới` is enabled.
-- Works in the main room and in an opened child thread.
-- Adds `Tóm tắt thread bằng AI` to the message three-dot menu.
-- Uses an OpenAI-compatible provider such as a local 9router endpoint.
-- Caches successful translations and summaries locally to avoid repeat requests.
-- Masks password, bearer-token, and API-key-like text before sending it to the provider.
+- Dịch nội dung chính của message sang ngôn ngữ được chọn, mặc định là tiếng Việt.
+- Tự động dịch message mới khi bật `Tự dịch message mới`.
+- Hoạt động ở room chính và thread con đang mở.
+- Thêm nút `Tóm tắt thread bằng AI` vào menu ba chấm của message.
+- Dùng provider tương thích OpenAI, ví dụ 9router chạy local.
+- Cache bản dịch và summary ở local để không gọi provider lại khi không cần.
+- Che password, bearer token và API key trước khi gửi nội dung tới provider.
 
-## Install Unpacked
+## Cài extension dạng unpacked
 
-1. Open `chrome://extensions` in Chrome.
-2. Enable **Developer mode**.
-3. Choose **Load unpacked** and select this project folder.
-4. Open Google Chat, then reload the extension from `chrome://extensions` after source changes.
-5. Hard-refresh the Google Chat tab.
+1. Mở `chrome://extensions` trong Chrome.
+2. Bật **Developer mode**.
+3. Chọn **Load unpacked** và chọn thư mục project này.
+4. Mở Google Chat. Khi source thay đổi, bấm Reload extension tại `chrome://extensions`.
+5. Hard-refresh tab Google Chat.
 
-The extension only matches `chat.google.com` and the local fixture URL used by tests.
+Extension chỉ chạy trên `chat.google.com` và URL fixture local dùng cho test.
 
-## Configure Provider
+## Cấu hình provider
 
-1. Click the extension icon and choose **Mở Settings**, or open the extension's Options page.
-2. Set **Base URL** to your OpenAI-compatible endpoint, for example `http://127.0.0.1:<port>/v1`.
-3. Enter the provider API key. It is stored in `chrome.storage.local`, not Chrome Sync.
-4. Choose a model. Model names containing `luna` are listed first; `gpt-5.6-luna` or the exact model ID from your provider can be selected.
-5. Set the target language, source detection, timeout, cache TTL, and credential masking.
-6. Click **Lưu Settings**.
+1. Bấm icon extension rồi chọn **Mở Settings**, hoặc mở trang Options của extension.
+2. Nhập **Base URL** của endpoint tương thích OpenAI, ví dụ `http://127.0.0.1:<port>/v1`.
+3. Nhập API key của provider. Key được lưu trong `chrome.storage.local`, không lưu trong Chrome Sync.
+4. Chọn model. Các model có tên chứa `luna` được ưu tiên đứng đầu; có thể chọn `gpt-5.6-luna` hoặc nhập đúng model ID provider cung cấp.
+5. Chọn ngôn ngữ đích, ngôn ngữ nguồn, timeout, thời gian cache và chế độ che credential.
+6. Bấm **Lưu Settings**.
 
-The extension does not call Google Translate. Translation and summary both use the configured AI provider.
+Extension không gọi Google Translate. Cả dịch và tóm tắt đều dùng AI provider đã cấu hình.
 
-## Enable Specific Rooms
+## Bật từng room cần dịch
 
-Translation is off for rooms until you explicitly enable them.
+Mặc định extension không dịch room nào cho tới khi bạn bật rõ ràng.
 
-1. Open the target room in Google Chat.
-2. Click the extension icon.
-3. Turn on **Dịch room này**.
-4. Leave it off for rooms that should not be processed.
+1. Mở room cần dịch trong Google Chat.
+2. Bấm icon extension.
+3. Bật **Dịch room này**.
+4. Giữ tắt đối với room không muốn xử lý.
 
-The allowlist is stored locally with the extension settings. Turning the global **Dịch tự động** switch off stops new translation work while keeping settings intact.
+Danh sách room được bật được lưu local cùng Settings. Tắt công tắc **Dịch tự động** sẽ dừng xử lý message mới nhưng không xóa cấu hình.
 
-## Translate Messages
+## Dịch message
 
-- With auto-translation enabled, a `Dịch` action and translation surface appear below supported message text.
-- The original message stays visible. Long translations wrap inside the message bubble.
-- Open a child thread: replies in the detailed thread panel are observed and translated automatically.
-- Click `Dịch lại` to explicitly retry a failed or updated translation.
-- Provider errors show a safe message inside the extension UI; the original Chat message is not replaced.
+- Khi bật dịch tự động, nút `Dịch` và vùng bản dịch xuất hiện bên dưới nội dung message.
+- Message gốc vẫn được giữ nguyên. Bản dịch dài sẽ tự xuống dòng trong khung message.
+- Mở thread con: các reply trong panel thread chi tiết sẽ được tự động quan sát và dịch.
+- Bấm `Dịch lại` để thử lại bản dịch bị lỗi hoặc bản dịch của nội dung đã thay đổi.
+- Lỗi provider chỉ hiển thị thông báo an toàn trong UI extension; nội dung gốc trong Google Chat không bị thay thế.
 
-![Inline translation](docs/screenshots/02-inline-translation.png)
+![Dịch inline](docs/screenshots/02-inline-translation.png)
 
-![Child thread translation](docs/screenshots/03-child-thread.png)
+![Dịch thread con](docs/screenshots/03-child-thread.png)
 
-## Summarize a Thread
+## Tóm tắt thread
 
-1. Open the message's three-dot menu.
-2. Click **Tóm tắt thread bằng AI**.
-3. Read the private summary card shown by the extension.
-4. When new messages arrive, the card shows a stale notice.
-5. Click **Cập nhật** to summarize the changed thread. The summary is never posted into Google Chat.
+1. Mở menu ba chấm của message.
+2. Bấm **Tóm tắt thread bằng AI**.
+3. Đọc summary trong popup riêng tư của extension.
+4. Khi có message mới, popup hiển thị thông báo cần cập nhật.
+5. Bấm **Cập nhật** để tóm tắt lại phần thay đổi. Summary không bao giờ được gửi thành message vào Google Chat.
 
-![Private summary card](docs/screenshots/04-summary-card.png)
+![Popup summary riêng tư](docs/screenshots/04-summary-card.png)
 
-## Cache and Privacy
+## Cache và quyền riêng tư
 
-- Translation and summary caches use separate local namespaces.
-- A successful result can be reused until the configured TTL expires.
-- Failed provider responses are not cached.
-- **Xóa cache dịch** and **Xóa cache summary** clear only their respective cache.
-- Provider output is rendered as text, so HTML-like output is not executed.
-- Do not place production API keys, private room exports, or real message screenshots in the repository.
+- Cache dịch và cache summary dùng hai namespace local riêng biệt.
+- Kết quả thành công được dùng lại cho tới khi hết TTL đã cấu hình.
+- Kết quả provider bị lỗi không được cache.
+- **Xóa cache dịch** và **Xóa cache summary** chỉ xóa đúng loại cache tương ứng.
+- Kết quả từ provider được render như text, nên HTML-like output không thể thực thi.
+- Không đưa API key production, dữ liệu room riêng tư hoặc screenshot message thật vào repository.
 
-## Troubleshooting
+## Xử lý sự cố
 
-| Symptom | Check |
+| Hiện tượng | Cần kiểm tra |
 |---|---|
-| No translation appears | Confirm the room toggle is on, global auto-translation is on, and the provider model is configured. |
-| Authentication error | Re-enter the provider API key in Settings. |
-| Rate-limit or server error | Click `Dịch lại` or `Cập nhật` after the provider is available; there is no hidden retry loop. |
-| Timeout | Increase the Settings timeout or check the local provider process. |
-| Child thread is not translated | Reload the extension, hard-refresh Google Chat, enable the current room, then reopen the child thread. |
-| Old translation remains after editing | Click `Dịch lại`; the new source text uses a new cache key. |
+| Không thấy bản dịch | Kiểm tra room đã bật, công tắc dịch tự động đang bật và model provider đã cấu hình. |
+| Lỗi authentication | Nhập lại API key trong Settings. |
+| Lỗi rate limit hoặc server | Bấm `Dịch lại` hoặc `Cập nhật` sau khi provider hoạt động; extension không tự retry ngầm. |
+| Request timeout | Tăng timeout trong Settings hoặc kiểm tra process provider local. |
+| Thread con không được dịch | Reload extension, hard-refresh Google Chat, bật room hiện tại rồi mở lại thread con. |
+| Bản dịch cũ còn hiển thị sau khi sửa message | Bấm `Dịch lại`; nội dung mới sẽ dùng cache key mới. |
 
-![Provider error state](docs/screenshots/05-provider-error.png)
+![Trạng thái lỗi provider](docs/screenshots/05-provider-error.png)
 
-## Development and Tests
+## Phát triển và chạy test
 
-Install dependencies once:
+Cài dependency một lần:
 
 ```bash
 npm install
 ```
 
-Run unit tests:
+Chạy unit test:
 
 ```bash
 npm run test:unit
 ```
 
-Run extension E2E tests with the deterministic local Chat/provider fixtures:
+Chạy E2E test với fixture Google Chat và provider local deterministic:
 
 ```bash
 npm run test:e2e
 ```
 
-Run both suites:
+Chạy toàn bộ test:
 
 ```bash
 npm test
 ```
 
-Capture the README screenshots:
+Tạo lại screenshot cho README:
 
 ```bash
 node scripts/capture-readme-screenshots.mjs
 ```
 
-The automated tests never use production Google Chat, production 9router, real API keys, or live room content.
+Automated test không dùng Google Chat production, 9router production, API key thật hoặc nội dung room live.
