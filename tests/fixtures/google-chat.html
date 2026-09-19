@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Mock Google Chat</title>
+  <style>
+    body { margin:0; font:14px system-ui,sans-serif; color:#17232b; background:#eef2f5; }
+    header { padding:14px 20px; background:#203038; color:#fff; }
+    main { max-width:760px; margin:24px auto; background:#fff; padding:20px; border-radius:12px; }
+    article { position:relative; padding:12px; margin:10px 0; background:#f6f8f9; border-radius:9px; }
+    [data-message-actions] { margin-top:8px; display:flex; gap:6px; }
+    [data-menu-popup] { position:absolute; right:10px; top:38px; z-index:5; width:210px; background:#fff; border:1px solid #cdd8db; border-radius:8px; box-shadow:0 8px 24px #17232b33; padding:5px; }
+    [data-menu-popup] button { display:block; width:100%; border:0; background:#fff; text-align:left; padding:8px; cursor:pointer; }
+    [data-menu-popup] button:hover { background:#eef6f4; }
+    .controls { display:flex; gap:8px; margin-bottom:16px; } .controls button { padding:7px 10px; }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+  <header>Mock Google Chat · Chemmat 改修・運用連携</header>
+  <main id="room" aria-label="Chemmat room" data-tc-room-id="fixture-room">
+    <div class="controls">
+      <button id="add-reply">Add reply</button>
+      <button id="edit-reply">Edit reply</button>
+      <button id="delete-reply">Delete reply</button>
+      <button id="open-thread">Open thread</button>
+    </div>
+    <article data-message-id="m-1" data-thread-id="t-1" data-author="小野和夫" data-time="10:29" data-text="午後にトヨタで確認してもらいます。少々お待ちください">
+      <b>小野和夫</b> <time>10:29</time>
+      <div data-message-actions><button data-menu aria-label="More">⋮</button></div>
+      <div data-menu-popup hidden><button data-forward>Chuyển tiếp tin nhắn</button></div>
+    </article>
+    <article data-message-id="m-2" data-thread-id="t-1" data-author="小野和夫" data-time="12:30" data-text="作業中 問題あり。teams参照して対応してください">
+      <b>小野和夫</b> <time>12:30</time>
+      <div data-message-actions><button data-menu aria-label="More">⋮</button></div>
+      <div data-menu-popup hidden><button data-forward>Chuyển tiếp tin nhắn</button></div>
+    </article>
+    <article data-message-id="m-3" data-thread-id="t-1" data-author="Phạm Ngọc Mạnh" data-time="14:38" data-text="本日も20時までの申請をお願いいたします。">
+      <b>Phạm Ngọc Mạnh</b> <time>14:38</time>
+      <div data-message-actions><button data-menu aria-label="More">⋮</button></div>
+      <div data-menu-popup hidden><button data-forward>Chuyển tiếp tin nhắn</button></div>
+    </article>
+    <article class="live-message-shell">
+      <div data-message-id="m-meta" data-thread-id="t-1" data-author="小野和夫" data-time="Hôm qua 15:00">
+        <div data-author>小野和夫</div>
+        <div>Người dùng bên ngoài không do quản trị viên quản lý</div>
+      </div>
+      <div class="message-body">午後にトヨタで確認してもらいます。</div>
+      <div data-message-actions><button data-menu aria-label="More">⋮</button></div>
+      <div data-menu-popup hidden><button data-forward>Chuyển tiếp tin nhắn</button></div>
+      <time>Hôm qua 15:00</time>
+    </article>
+  </main>
+  <script>
+    const room = document.querySelector("#room");
+    room.addEventListener("click", (event) => {
+      const menu = event.target.closest("[data-menu]");
+      if (menu) {
+        const popup = menu.closest(".live-message-shell, [data-message-id]").querySelector("[data-menu-popup]");
+        popup.hidden = !popup.hidden;
+        return;
+      }
+      if (event.target.matches("[data-forward]")) event.target.closest("[data-menu-popup]").hidden = true;
+    });
+    document.querySelector("#add-reply").addEventListener("click", () => {
+      const node = document.createElement("article");
+      node.dataset.messageId = "m-" + Date.now();
+      node.dataset.threadId = "t-1";
+      node.dataset.author = "小野和夫";
+      node.dataset.time = "15:00";
+      node.dataset.text = "追加の確認をお願いします。";
+      node.innerHTML = "<b>小野和夫</b> <time>15:00</time><div data-message-actions><button data-menu aria-label=\"More\">⋮</button></div><div data-menu-popup hidden><button data-forward>Chuyển tiếp tin nhắn</button></div>";
+      room.append(node);
+    });
+    document.querySelector("#edit-reply").addEventListener("click", () => {
+      const node = document.querySelector("[data-message-id='m-3']");
+      node.dataset.text = "本日も21時までの申請をお願いいたします。";
+    });
+    document.querySelector("#delete-reply").addEventListener("click", () => document.querySelector("[data-message-id='m-3']")?.remove());
+    document.querySelector("#open-thread").addEventListener("click", () => {
+      let panel = document.querySelector('[data-is-detailed-thread-view="true"]');
+      if (!panel) {
+        panel = document.createElement("section");
+        panel.dataset.isDetailedThreadView = "true";
+        panel.innerHTML = '<h2>Thread</h2><article data-message-id="thread-m-1" data-thread-id="t-1" data-author="佐藤" data-time="15:30" data-text="返信を確認してください。"><b>佐藤</b> <time>15:30</time></article>';
+        room.append(panel);
+      }
+      panel.hidden = false;
+    });
+  </script>
+</body>
+</html>

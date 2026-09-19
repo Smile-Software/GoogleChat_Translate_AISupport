@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>TranslateChat AI</title>
+  <style>
+    body { width: 300px; margin: 0; padding: 14px; font: 13px system-ui, sans-serif; color:#17232b; }
+    h1 { font-size:16px; margin:0 0 12px; }
+    label { display:block; margin:9px 0 4px; color:#52626a; }
+    select, button { width:100%; box-sizing:border-box; padding:7px; border:1px solid #c9d4d7; border-radius:7px; background:#fff; }
+    .row { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .row button { width:auto; }
+    .room { margin:12px 0; padding:10px; border:1px solid #d9e1e3; border-radius:9px; background:#f7fafb; }
+    .room strong { display:block; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .room small { display:block; min-height:17px; color:#65747a; }
+    .room input { width:auto; }
+    #status { min-height:18px; margin:9px 0; color:#287d70; }
+    #open-settings { margin-top:10px; }
+  </style>
+</head>
+<body>
+  <h1>TranslateChat AI</h1>
+  <div class="row"><span>Dịch tự động</span><input id="enabled" type="checkbox"></div>
+  <div class="room">
+    <strong id="room-label">Đang kiểm tra room...</strong>
+    <small id="room-status" role="status">Chưa xác định</small>
+    <div class="row"><span>Dịch room này</span><input id="room-enabled" type="checkbox" disabled></div>
+  </div>
+  <label for="target">Ngôn ngữ đích</label>
+  <select id="target"><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option></select>
+  <label for="model">Model</label>
+  <select id="model"><option value="">Chưa cấu hình</option></select>
+  <div id="status" role="status"></div>
+  <button id="clear-translation">Xóa cache dịch</button>
+  <button id="open-settings">Mở Settings</button>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

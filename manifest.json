@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "TranslateChat AI",
+  "version": "0.1.0",
+  "description": "Inline translation and private AI thread summaries for Google Chat.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://chat.google.com/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "TranslateChat AI",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_page": "src/options/options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://chat.google.com/*", "http://localhost/*"],
+      "js": ["src/content/message-text.js", "src/content/message-surface.js", "src/content/chat-observer.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
