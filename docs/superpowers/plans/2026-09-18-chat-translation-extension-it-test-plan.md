@@ -339,6 +339,24 @@ Files:
 - Summary stale state is visible after new thread messages.
 - Clean-profile E2E run passes twice consecutively.
 
+## Resilience Coverage Added 2026-09-19
+
+The following cases are now executable in `tests/e2e/resilience.spec.js` and supported by deterministic provider scenarios in `tests/fixtures/provider-server.js`:
+
+| ID | Priority | Automated coverage | Expected |
+|---|---|---|---|
+| RES-E2E-001 | P0 | Disable `fixture-room` before loading the fixture | No translation action is injected into the room |
+| RES-E2E-002 | P0 | Provider returns 401 during translation | Original remains; safe authentication error is shown; no raw provider body leaks |
+| RES-E2E-003 | P0 | Provider returns 429, then explicit retry | One failed request, one retry request, then translation success; no automatic loop |
+| RES-E2E-004 | P0 | Provider returns 500, then explicit retry | One failed request, one retry request, then translation success |
+| RES-E2E-005 | P1 | Provider exceeds configured timeout | Timeout state is shown and source text remains available |
+| RES-E2E-006 | P0 | Provider returns malformed JSON or missing content | Safe error is shown; raw response is not rendered |
+| RES-E2E-007 | P0 | Summary refresh returns 500 after an existing summary | Previous private summary remains visible with retryable error state |
+| RES-E2E-008 | P0 | Provider returns HTML-like translation text | Text is rendered literally; no `img`, `iframe`, or script node is created |
+| RES-E2E-009 | P0 | Open detailed child thread | Reply is auto-translated inside the detailed-thread panel |
+
+Unit-level provider error contract coverage is in `tests/unit/provider-errors.test.js`; content operation state coverage is in `tests/unit/operation-state.test.js`.
+
 ## Self-review
 
 - Scope covers translation, summary, popup, Settings, cache, security, DOM resilience, performance, and release verification.

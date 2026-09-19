@@ -3,6 +3,7 @@ const cleanChatMessageText = globalThis.TranslateChatMessageText.cleanMessageTex
 const getMessageRenderTarget = globalThis.TranslateChatMessageSurface.findMessageRenderTarget;
 const isTranslatableMessageNode = globalThis.TranslateChatMessageSurface.isTranslatableMessageNode;
 const keepSingleMessageSurface = globalThis.TranslateChatMessageSurface.keepSingleMessageSurface;
+const { runUiOperation, toUserError } = globalThis.TranslateChatOperationState || {};
 let settings = {
   enabled: true,
   targetLanguage: "vi",
@@ -20,6 +21,7 @@ let lastMenuMessage = null;
 let roomEnabled = false;
 let currentRoom = { id: "", label: "", supported: false };
 let lastUrl = location.href;
+const translationOperations = new WeakMap();
 
 const style = document.createElement("style");
 style.setAttribute(UI_ATTR, "");
@@ -31,6 +33,7 @@ style.textContent = [
   "[data-tc-action],[data-tc-summary-menu]{border:1px solid #b9d9d2;background:#fff;color:#1c665d;border-radius:12px;padding:3px 8px;cursor:pointer;font-size:11px}",
   "[data-tc-action]:disabled{opacity:.55;cursor:wait}",
   "[data-tc-error]{margin-top:5px;color:#9a3d34;font-size:12px}",
+  "[data-tc-summary-error]{margin-top:5px;color:#9a3d34;font-size:12px}",
   "[data-tc-summary-card]{position:fixed;z-index:2147483646;right:24px;top:80px;width:min(390px,calc(100vw - 48px));max-height:70vh;overflow:auto;padding:16px;background:#fffdf5;border:1px solid #e5d7a2;border-radius:12px;box-shadow:0 10px 35px #17232b33;color:#27352f;font-family:system-ui,sans-serif}",
   "[data-tc-summary-card] h3{margin:0 0 8px;font-size:16px}",
   "[data-tc-summary-card] p{white-space:pre-wrap;line-height:1.5;font-size:13px}",
@@ -68,7 +71,14 @@ function ensureStyle() {
 
 function send(message) {
   return chrome.runtime.sendMessage(message).then((response) => {
-    if (!response || !response.ok) throw new Error(response?.error || "Request failed");
+    if (!response || !response.ok) {
+      const error = new Error(response?.error || "Request failed");
+      error.code = response?.code || "REQUEST_FAILED";
+      error.status = response?.status || 0;
+      error.retryable = Boolean(response?.retryable);
+      error.userMessage = response?.error || "Request failed";
+      throw error;
+    }
     return response;
   });
 }
@@ -182,35 +192,45 @@ function renderError(container, error) {
   container.replaceChildren();
   const errorNode = document.createElement("div");
   errorNode.setAttribute("data-tc-error", "");
-  errorNode.textContent = error.message || "Không thể xử lý";
+  errorNode.textContent = toUserError(error).message;
   container.append(errorNode);
 }
 
 async function translate(node, action, output) {
   const data = dataOf(node);
-  action.disabled = true;
-  action.textContent = "Đang dịch...";
-  output.replaceChildren();
-  try {
-    const response = await send({
+  const operationId = Symbol("translation");
+  translationOperations.set(node, operationId);
+  const isCurrent = () => translationOperations.get(node) === operationId && node.isConnected && output.isConnected;
+  const result = await runUiOperation({
+    request: () => send({
       type: "TRANSLATE",
       text: data.text,
       sourceLanguage: settings.sourceLanguage,
       targetLanguage: settings.targetLanguage
-    });
-    const label = document.createElement("span");
-    label.setAttribute("data-tc-label", "");
-    label.textContent = "AI · " + settings.targetLanguage + (response.result.cached ? " · cache" : "");
-    output.append(label, document.createTextNode(response.result.text));
-    output.hidden = false;
-    action.textContent = "Dịch lại";
-  } catch (error) {
-    renderError(output, error);
-    output.hidden = false;
-    action.textContent = "Thử lại";
-  } finally {
-    action.disabled = false;
-  }
+    }),
+    onLoading: () => {
+      action.disabled = true;
+      action.textContent = "Đang dịch...";
+      output.replaceChildren();
+    },
+    onSuccess: (response) => {
+      if (!response.result?.text) throw new Error("Translation response missing content");
+      const label = document.createElement("span");
+      label.setAttribute("data-tc-label", "");
+      label.textContent = "AI · " + settings.targetLanguage + (response.result.cached ? " · cache" : "");
+      output.append(label, document.createTextNode(response.result.text));
+      output.hidden = false;
+      action.textContent = "Dịch lại";
+    },
+    onError: (error) => {
+      renderError(output, error);
+      output.hidden = false;
+      action.textContent = "Thử lại";
+    },
+    isCurrent
+  });
+  if (isCurrent()) action.disabled = false;
+  return result;
 }
 
 function ensureMessage(node) {
@@ -268,6 +288,17 @@ function summaryCard(threadId, messages) {
   updateSummary(false);
 }
 
+function renderSummaryError(card, error) {
+  let errorNode = card.querySelector("[data-tc-summary-error]");
+  if (!errorNode) {
+    errorNode = document.createElement("div");
+    errorNode.setAttribute("data-tc-summary-error", "");
+    const body = card.querySelector("[data-tc-summary-body]");
+    body.after(errorNode);
+  }
+  errorNode.textContent = toUserError(error).message + " Nhấn Cập nhật để thử lại.";
+}
+
 async function updateSummary(force) {
   if (!activeSummary) return;
   const messages = collectThread(activeSummary.threadId);
@@ -287,17 +318,32 @@ async function updateSummary(force) {
     activeSummary.card.insertBefore(notice, body);
   }
   if (!force && activeSummary.summary && activeSummary.fingerprint !== nextFingerprint) return;
-  body.textContent = "Đang tóm tắt...";
-  try {
-    const response = await send({ type: "SUMMARY", threadId: activeSummary.threadId, messages: requestMessages, previousSummary: activeSummary.summary });
+  const card = activeSummary.card;
+  const operationId = Symbol("summary");
+  activeSummary.operationId = operationId;
+  const isCurrent = () => activeSummary?.operationId === operationId && activeSummary.card === card && card.isConnected;
+  const oldError = card.querySelector("[data-tc-summary-error]");
+  if (oldError) oldError.remove();
+  const result = await runUiOperation({
+    request: () => send({ type: "SUMMARY", threadId: activeSummary.threadId, messages: requestMessages, previousSummary: activeSummary.summary }),
+    onLoading: () => {
+      if (!activeSummary.summary) body.textContent = "Đang tóm tắt...";
+    },
+    onSuccess: (response) => {
+      if (!response.result?.text) throw new Error("Summary response missing content");
     activeSummary.summary = response.result.text;
     activeSummary.fingerprint = nextFingerprint;
     const oldStale = activeSummary.card.querySelector("[data-tc-stale]");
     if (oldStale) oldStale.remove();
     body.textContent = response.result.text;
-  } catch (error) {
-    renderError(body, error);
-  }
+    },
+    onError: (error) => {
+      if (!activeSummary.summary) body.textContent = "";
+      renderSummaryError(card, error);
+    },
+    isCurrent
+  });
+  return result;
 }
 
 function injectSummaryMenu(menu) {

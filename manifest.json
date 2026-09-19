@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["https://chat.google.com/*", "http://localhost/*"],
-      "js": ["src/content/message-text.js", "src/content/message-surface.js", "src/content/chat-observer.js"],
+      "js": ["src/content/message-text.js", "src/content/message-surface.js", "src/content/operation-state.js", "src/content/chat-observer.js"],
       "run_at": "document_idle"
     }
   ]

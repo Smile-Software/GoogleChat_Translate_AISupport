@@ -22,7 +22,7 @@ export async function startFixtureServer() {
   }));
 }
 
-export async function launchConfiguredApp({ autoTranslate = false } = {}) {
+export async function launchConfiguredApp({ autoTranslate = false, requestTimeoutMs = 20000, roomEnabled = true } = {}) {
   const fixture = await startFixtureServer();
   const provider = await startProviderServer();
   const extensionPath = root;
@@ -41,22 +41,25 @@ export async function launchConfiguredApp({ autoTranslate = false } = {}) {
   await options.locator("#baseUrl").fill(provider.baseUrl.replace("127.0.0.1", "localhost"));
   await options.locator("#apiKey").fill("TEST_KEY");
   await options.locator("#model").fill("luna-fast");
+  await options.locator("#timeout").fill(String(requestTimeoutMs));
   await options.locator("#autoTranslate").setChecked(autoTranslate);
   await options.locator("#save").click();
   await options.getByText("Đã lưu").waitFor();
-  await options.evaluate(async () => {
-    const current = await chrome.runtime.sendMessage({ type: "GET_SETTINGS" });
-    await chrome.runtime.sendMessage({
-      type: "SAVE_SETTINGS",
-      settings: {
-        ...current.settings,
-        roomAllowlist: {
-          ...current.settings.roomAllowlist,
-          "fixture-room": { label: "Fixture room", enabledAt: Date.now() }
+  if (roomEnabled) {
+    await options.evaluate(async () => {
+      const current = await chrome.runtime.sendMessage({ type: "GET_SETTINGS" });
+      await chrome.runtime.sendMessage({
+        type: "SAVE_SETTINGS",
+        settings: {
+          ...current.settings,
+          roomAllowlist: {
+            ...current.settings.roomAllowlist,
+            "fixture-room": { label: "Fixture room", enabledAt: Date.now() }
+          }
         }
-      }
+      });
     });
-  });
+  }
   const page = await context.newPage();
   await page.goto(fixture.url);
   return {
