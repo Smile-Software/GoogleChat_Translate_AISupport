@@ -29,8 +29,9 @@ test("marks summary stale and updates with new messages", async () => {
     await expect(app.page.locator("[data-tc-stale]")).toContainText("message mới");
     await app.page.locator("[data-tc-summary-card] [data-tc-primary]").click();
     await expect(app.page.locator("[data-tc-summary-card]")).toContainText("Tóm tắt:");
-    const updateRequest = app.provider.requests.slice(before).find((request) => request.url === "/v1/chat/completions");
-    expect(updateRequest.body).toContain("追加の確認");
+    await expect.poll(() => app.provider.requests.slice(before).filter((request) => request.url === "/v1/chat/completions").length).toBe(1);
+    const completedUpdateRequest = app.provider.requests.slice(before).find((request) => request.url === "/v1/chat/completions");
+    expect(completedUpdateRequest.body).toContain("追加の確認");
   } finally {
     await app.close();
   }
