@@ -15,6 +15,8 @@ function readForm() {
     model: $("model").value,
     requestTimeoutMs: Number($("timeout").value),
     targetLanguage: $("target").value,
+    incomingTargetLanguage: $("target").value,
+    outgoingTargetLanguage: $("outgoingTarget").value,
     sourceLanguage: $("source").value,
     autoTranslate: $("autoTranslate").checked,
     showOriginal: $("showOriginal").checked,
@@ -33,6 +35,7 @@ function fill(value) {
   $("model").value = value.model;
   $("timeout").value = value.requestTimeoutMs;
   $("target").value = value.targetLanguage;
+  $("outgoingTarget").value = value.outgoingTargetLanguage;
   $("source").value = value.sourceLanguage;
   $("autoTranslate").checked = value.autoTranslate;
   $("showOriginal").checked = value.showOriginal;

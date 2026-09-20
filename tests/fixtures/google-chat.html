@@ -13,6 +13,13 @@
     [data-menu-popup] button { display:block; width:100%; border:0; background:#fff; text-align:left; padding:8px; cursor:pointer; }
     [data-menu-popup] button:hover { background:#eef6f4; }
     .controls { display:flex; gap:8px; margin-bottom:16px; } .controls button { padding:7px 10px; }
+    [data-real-composer] { position:relative; margin-top:18px; padding:10px; border:1px solid #d8e0ee; border-radius:12px; background:#eef3fc; }
+    [data-real-composer] [contenteditable] { min-height:34px; padding:8px 10px; border-radius:8px; background:#fff; outline:none; }
+    [data-real-composer] [role=toolbar] { display:none; }
+    [data-real-composer] [data-action-row] { display:flex; justify-content:flex-end; gap:4px; margin-top:7px; }
+    [data-real-composer] [data-action-shell] { display:inline-flex; align-items:center; justify-content:center; }
+    [data-real-composer] [data-send-shell] { flex-direction:column; width:68px; min-height:108px; border-radius:16px; background:#eaf0ff; }
+    [data-real-composer] [data-action-row] button,[data-real-composer] [data-action-row] [role=button] { min-width:32px; min-height:30px; border:0; border-radius:50%; background:transparent; cursor:pointer; }
     [hidden] { display:none !important; }
   </style>
 </head>
@@ -24,6 +31,19 @@
       <button id="edit-reply">Edit reply</button>
       <button id="delete-reply">Delete reply</button>
       <button id="open-thread">Open thread</button>
+    </div>
+    <div class="I0LFzc mS1Rod" jsname="SFaVIf" data-real-composer data-thread-id="t-1">
+      <div class="tAVIoc I9OJHe">
+        <div class="hj99tb KRoqRc editable" contenteditable="true" role="textbox" aria-label="Trả lời" data-testid="composer-editor"></div>
+      </div>
+      <div class="dJ9vNe zxYfIc">
+        <div role="toolbar" aria-label="Tùy chọn định dạng"></div>
+        <div data-action-row>
+          <span data-action-shell><button type="button" role="button" aria-label="Thêm biểu tượng cảm xúc">☺</button></span>
+          <span data-action-shell><button type="button" aria-label="Lên lịch gửi" data-schedule>⏰</button></span>
+          <span data-action-shell data-send-shell><button type="button" aria-label="Gửi tin nhắn" data-send>➤</button></span>
+        </div>
+      </div>
     </div>
     <article data-message-id="m-1" data-thread-id="t-1" data-author="小野和夫" data-time="10:29" data-text="午後にトヨタで確認してもらいます。少々お待ちください">
       <b>小野和夫</b> <time>10:29</time>
@@ -103,6 +123,12 @@
         room.append(panel);
       }
       panel.hidden = false;
+    });
+    document.querySelector("[data-real-composer] [data-schedule]").addEventListener("click", () => {
+      document.querySelector("[data-real-composer]").dataset.scheduleClicked = "true";
+    });
+    document.querySelector("[data-real-composer] [data-send]").addEventListener("click", () => {
+      document.querySelector("[data-real-composer]").dataset.sendClicked = "true";
     });
   </script>
 </body>

@@ -12,6 +12,7 @@ async function load() {
   settings = response.settings;
   $("enabled").checked = settings.enabled;
   $("target").value = settings.targetLanguage;
+  $("outgoing-target").value = settings.outgoingTargetLanguage;
   const models = await send({ type: "LIST_MODELS" }).catch(() => ({ ok: false, models: [] }));
   $("model").replaceChildren();
   const ids = models.ok ? models.models : [];
@@ -69,7 +70,8 @@ $("room-enabled").addEventListener("change", async () => {
   roomStatus = { ...roomStatus, enabled: response.enabled };
   renderRoomStatus(roomStatus);
 });
-$("target").addEventListener("change", () => save({ targetLanguage: $("target").value }));
+$("target").addEventListener("change", () => save({ targetLanguage: $("target").value, incomingTargetLanguage: $("target").value }));
+$("outgoing-target").addEventListener("change", () => save({ outgoingTargetLanguage: $("outgoing-target").value }));
 $("model").addEventListener("change", () => save({ model: $("model").value }));
 $("clear-translation").addEventListener("click", async () => {
   await send({ type: "CLEAR_CACHE", kind: "translation" });

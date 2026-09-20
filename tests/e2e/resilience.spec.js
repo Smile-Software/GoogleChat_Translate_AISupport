@@ -114,3 +114,17 @@ test("provider text is rendered as text, never as HTML", async () => {
     await app.close();
   }
 });
+
+test("context creation failure falls back to simple translation", async () => {
+  const app = await launchConfiguredApp();
+  try {
+    app.provider.failNextFor("room-context-initial", "server");
+    const message = app.page.locator("[data-message-id='m-1']");
+    await message.locator("[data-tc-action]").click();
+    await expect(message.locator("[data-tc-translation]")).toContainText("Chiều nay sẽ nhờ Toyota");
+    expect(app.provider.contextRequests()).toHaveLength(1);
+    expect(app.provider.translationRequests()).toHaveLength(1);
+  } finally {
+    await app.close();
+  }
+});

@@ -1,7 +1,13 @@
 import { normalizeSettings } from "../settings/schema.js";
 import { setRoomEnabled } from "../settings/rooms.js";
 import { redactSensitive } from "../security/redact.js";
-import { buildSummaryMessages, buildTranslationMessages, chatCompletion, listModels } from "../provider/openai-compatible.js";
+import {
+  buildContextAwareTranslationMessages,
+  buildComposeTranslationMessages,
+  buildSummaryMessages,
+  chatCompletion,
+  listModels
+} from "../provider/openai-compatible.js";
 import { cacheStats, clearCache, getCache, putCache } from "../cache/indexed-db.js";
 
 const fallbackMemory = new Map();
@@ -36,15 +42,62 @@ async function writeCache(entry) {
   }
 }
 
+function safeMessages(messages, config) {
+  return (Array.isArray(messages) ? messages : []).map((item) => {
+    const safe = config.maskCredentials ? redactSensitive(item.text) : { text: item.text };
+    return { ...item, text: safe.text };
+  }).filter((item) => String(item.text || "").trim());
+}
+
 async function translate(request) {
   const config = await settings();
   const safe = config.maskCredentials ? redactSensitive(request.text) : { text: request.text, redacted: false };
-  const key = "translation:" + await digest(JSON.stringify([safe.text, request.sourceLanguage, request.targetLanguage, config.model, "v1"]));
+  const threadMessages = safeMessages(request.threadMessages, config);
+  const key = "translation:" + await digest(JSON.stringify([
+    safe.text,
+    request.sourceLanguage,
+    request.targetLanguage,
+    threadMessages.map((item) => [item.id, item.author, item.time, item.text]),
+    config.model,
+    "v2"
+  ]));
   const cached = await readCache(key);
   if (cached) return { text: cached.value, cached: true, redacted: safe.redacted };
   if (!config.baseUrl || !config.apiKey || !config.model) throw new Error("Configure provider in Settings");
-  const value = await chatCompletion(config, buildTranslationMessages(safe.text, request.sourceLanguage, request.targetLanguage));
+  const value = await chatCompletion(config, buildContextAwareTranslationMessages({
+    text: safe.text,
+    sourceLanguage: request.sourceLanguage,
+    targetLanguage: request.targetLanguage,
+    threadMessages
+  }));
   await writeCache({ key, kind: "translation", value, expiresAt: Date.now() + config.cacheTtlDays * 86400000 });
+  return { text: value, cached: false, redacted: safe.redacted };
+}
+
+async function composeTranslate(request) {
+  const config = await settings();
+  const safe = config.maskCredentials ? redactSensitive(request.text) : { text: request.text, redacted: false };
+  const threadMessages = safeMessages(request.threadMessages, config);
+  const key = "compose-translation:" + await digest(JSON.stringify([
+    safe.text,
+    request.sourceLanguage,
+    request.targetLanguage,
+    request.tone,
+    threadMessages.map((item) => [item.id, item.author, item.time, item.text]),
+    config.model,
+    "v1"
+  ]));
+  const cached = await readCache(key);
+  if (cached) return { text: cached.value, cached: true, redacted: safe.redacted };
+  if (!config.baseUrl || !config.apiKey || !config.model) throw new Error("Configure provider in Settings");
+  const value = await chatCompletion(config, buildComposeTranslationMessages({
+    text: safe.text,
+    sourceLanguage: request.sourceLanguage,
+    targetLanguage: request.targetLanguage,
+    tone: request.tone,
+    threadMessages
+  }));
+  await writeCache({ key, kind: "compose-translation", value, expiresAt: Date.now() + config.cacheTtlDays * 86400000 });
   return { text: value, cached: false, redacted: safe.redacted };
 }
 
@@ -86,6 +139,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ ok: true, settings: next, enabled: Boolean(next.roomAllowlist[message.roomId]) });
       } else if (message.type === "LIST_MODELS") sendResponse({ ok: true, models: await listModels(await settings()) });
       else if (message.type === "TRANSLATE") sendResponse({ ok: true, result: await translate(message) });
+      else if (message.type === "COMPOSE_TRANSLATE") sendResponse({ ok: true, result: await composeTranslate(message) });
       else if (message.type === "SUMMARY") sendResponse({ ok: true, result: await summarize(message) });
       else if (message.type === "CLEAR_CACHE") {
         await clearCache(message.kind);

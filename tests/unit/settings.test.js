@@ -5,8 +5,17 @@ import { DEFAULT_SETTINGS, normalizeSettings, validateSettings } from "../../src
 test("normalizes defaults", () => {
   const value = normalizeSettings();
   assert.equal(value.targetLanguage, "vi");
+  assert.equal(value.incomingTargetLanguage, "vi");
+  assert.equal(value.outgoingTargetLanguage, "ja");
   assert.equal(value.cacheTtlDays, 7);
   assert.equal(value.maskCredentials, true);
+});
+
+test("keeps legacy target language as incoming target and supports separate outgoing target", () => {
+  const value = normalizeSettings({ targetLanguage: "en", outgoingTargetLanguage: "ja" });
+  assert.equal(value.targetLanguage, "en");
+  assert.equal(value.incomingTargetLanguage, "en");
+  assert.equal(value.outgoingTargetLanguage, "ja");
 });
 
 test("clamps unsafe cache and timeout values", () => {

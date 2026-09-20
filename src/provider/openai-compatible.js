@@ -122,6 +122,57 @@ export function buildTranslationMessages(text, sourceLanguage, targetLanguage) {
   ];
 }
 
+function formatThreadMessages(messages = []) {
+  return messages
+    .filter((item) => item && String(item.text || "").trim())
+    .map((item) => "[" + String(item.author || "Unknown") + " " + String(item.time || "") + "] " + String(item.text).trim())
+    .join("\n");
+}
+
+export function buildContextAwareTranslationMessages({ text, sourceLanguage, targetLanguage, threadMessages = [] }) {
+  return [
+    {
+      role: "system",
+      content: "Translate only the target message to " + targetLanguage + " from source language " + sourceLanguage + ". Use thread history only to resolve meaning, terminology, references, and omitted subjects. Do not translate, summarize, or repeat the thread history. Preserve meaning, names, URLs, line breaks, and tone. Return the translation only."
+    },
+    {
+      role: "user",
+      content: [
+        "THREAD HISTORY:",
+        formatThreadMessages(threadMessages) || "(none)",
+        "",
+        "MESSAGE TO TRANSLATE:",
+        String(text || "")
+      ].join("\n")
+    }
+  ];
+}
+
+export function buildComposeTranslationMessages({ text, sourceLanguage, targetLanguage, tone = "natural", threadMessages = [] }) {
+  const toneInstruction = {
+    natural: "Use a natural, clear conversational tone.",
+    formal: "Use a polite, formal business tone with appropriate greetings where natural.",
+    concise: "Use a concise, direct tone and remove unnecessary wording.",
+    warm: "Use a warm, courteous tone with a complete greeting or closing when appropriate."
+  }[tone] || "Use a natural, clear conversational tone.";
+  return [
+    {
+      role: "system",
+      content: "Translate the draft message to " + targetLanguage + " from source language " + sourceLanguage + ". " + toneInstruction + " Use thread history only to resolve meaning, terminology, references, and omitted subjects. Translate only the draft. Do not translate, summarize, or repeat thread history. Preserve names, URLs, line breaks, and intended meaning. Return the translated draft only."
+    },
+    {
+      role: "user",
+      content: [
+        "THREAD HISTORY:",
+        formatThreadMessages(threadMessages) || "(none)",
+        "",
+        "DRAFT MESSAGE TO TRANSLATE:",
+        String(text || "")
+      ].join("\n")
+    }
+  ];
+}
+
 export function buildSummaryMessages(messages, targetLanguage, length, previousSummary = "") {
   const joined = messages.map((item) => "[" + item.author + " " + item.time + "] " + item.text).join("\n");
   const prior = previousSummary ? "Previous summary:\n" + previousSummary + "\n\n" : "";

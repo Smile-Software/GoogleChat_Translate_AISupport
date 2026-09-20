@@ -4,6 +4,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   enabled: true,
   sourceLanguage: "auto",
   targetLanguage: "vi",
+  incomingTargetLanguage: "vi",
+  outgoingTargetLanguage: "ja",
   summaryLanguage: "vi",
   summaryLength: "medium",
   autoTranslate: true,
@@ -20,12 +22,16 @@ export const DEFAULT_SETTINGS = Object.freeze({
 
 export function normalizeSettings(input = {}) {
   const value = { ...DEFAULT_SETTINGS, ...input };
+  const incomingTargetLanguage = String(input.incomingTargetLanguage || input.targetLanguage || value.incomingTargetLanguage || "vi");
+  const outgoingTargetLanguage = String(input.outgoingTargetLanguage || value.outgoingTargetLanguage || "ja");
   const ttl = Number(value.cacheTtlDays);
   const timeout = Number(value.requestTimeoutMs);
   return {
     ...value,
     sourceLanguage: String(value.sourceLanguage || "auto"),
-    targetLanguage: String(value.targetLanguage || "vi"),
+    targetLanguage: incomingTargetLanguage,
+    incomingTargetLanguage,
+    outgoingTargetLanguage,
     summaryLanguage: String(value.summaryLanguage || "vi"),
     summaryLength: ["short", "medium", "long"].includes(value.summaryLength) ? value.summaryLength : "medium",
     enabled: Boolean(value.enabled),

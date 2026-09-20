@@ -52,11 +52,12 @@ export function startProviderServer() {
     if (req.url === "/v1/chat/completions") {
       const parsed = JSON.parse(body || "{}");
       const user = parsed.messages?.find((item) => item.role === "user")?.content || "";
+      const target = user.split(/(?:MESSAGE TO TRANSLATE|DRAFT MESSAGE TO TRANSLATE):\s*/).pop();
       const text = scenario === "xss" ? "<img src=x onerror=alert('fixture')>"
         : user.includes("Thread messages") || user.includes("Previous summary")
         ? "Tóm tắt: đã xác nhận vấn đề; cần kiểm tra và phản hồi tiếp."
-        : user.includes("午後") ? "Chiều nay sẽ nhờ Toyota kiểm tra. Vui lòng chờ một chút."
-        : user.includes("作業中") ? "Đang xử lý, có vấn đề. Hãy tham khảo Teams và xử lý."
+        : target.includes("午後") ? "Chiều nay sẽ nhờ Toyota kiểm tra. Vui lòng chờ một chút."
+        : target.includes("作業中") ? "Đang xử lý, có vấn đề. Hãy tham khảo Teams và xử lý."
         : "Bản dịch kiểm thử.";
       res.end(JSON.stringify({ choices: [{ message: { content: text } }] }));
       return;
